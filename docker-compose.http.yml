@@ -1,0 +1,22 @@
+# Surcouche de TEST : Hermes en HTTP direct sur l'IP, sans domaine.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.http.yml up -d --build
+#
+# Sert à vérifier que la stack démarre (base, agent, interface, modèle)
+# avant d'avoir un nom de domaine. Le mode vocal ne marchera pas : il
+# exige HTTPS. Repasser sur `docker compose up -d --build` une fois le
+# domaine en place.
+services:
+  caddy:
+    volumes:
+      - ./Caddyfile.http:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      - "80:80"
+
+  web:
+    build:
+      args:
+        # En HTTP le front parle à l'agent via la même origine que la page.
+        NEXT_PUBLIC_AGENT_URL: ""

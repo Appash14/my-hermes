@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  /* Fond très sombre légèrement chaud plutôt qu'un gris neutre :
+     moins clinique, plus lisible longtemps. */
+  --color-ink-950: #0b0a09;
+  --color-ink-900: #131110;
+  --color-ink-800: #1c1917;
+  --color-ink-700: #292524;
+  --color-ink-600: #44403c;
+
+  --color-bone-100: #f5f3f0;
+  --color-bone-300: #d6d3d1;
+  --color-bone-500: #a8a29e;
+
+  /* L'accent : un ambre chaud, un seul, utilisé avec parcimonie. */
+  --color-accent: #e8a33d;
+  --color-accent-dim: #8a5f1f;
+
+  --font-sans: "Inter var", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-ink-950);
+  color: var(--color-bone-100);
+}
+
+body {
+  /* Zones sûres iOS/Android quand l'app tourne en plein écran (PWA/APK). */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-700);
+  border-radius: 9999px;
+}
+
+/* Le point qui pulse pendant que Hermes réfléchit. */
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 1.4s ease-in-out infinite;
+}
+
+/* Anneau qui respire autour du bouton micro en écoute. */
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(232 163 61 / 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 18px rgb(232 163 61 / 0);
+  }
+}
+.animate-breathe {
+  animation: breathe 2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-soft,
+  .animate-breathe {
+    animation: none;
+  }
+}

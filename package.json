@@ -1,0 +1,19 @@
+{
+  "name": "hermes",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Hermes — agent conversationnel (web + APK) avec mode texte et mode vocal",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:web": "npm run dev -w @hermes/web",
+    "dev:agent": "npm run dev -w @hermes/agent",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

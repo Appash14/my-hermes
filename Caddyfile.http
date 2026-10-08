@@ -1,0 +1,32 @@
+# Caddyfile de TEST — sert Hermes en HTTP simple sur l'IP du VPS,
+# sans certificat ni nom de domaine.
+#
+# À n'utiliser que pour valider la stack avant d'avoir un domaine.
+# En HTTP :
+#   - le mode texte fonctionne normalement ;
+#   - le mode VOCAL est impossible, les navigateurs refusent l'accès au
+#     micro hors origine sécurisée. Ce n'est pas contournable.
+#
+# Usage :
+#   docker compose -f docker-compose.yml -f docker-compose.http.yml up -d --build
+#   puis http://203.0.113.10
+
+:80 {
+	encode zstd gzip
+
+	handle /ws/* {
+		reverse_proxy agent:4000 {
+			flush_interval -1
+		}
+	}
+
+	handle /api/* {
+		reverse_proxy agent:4000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}

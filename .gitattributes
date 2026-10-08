@@ -1,0 +1,20 @@
+# Le dépôt est édité sous Windows mais exécuté sous Linux.
+#
+# Un fichier .sh en fins de ligne CRLF échoue sur le VPS avec un message
+# trompeur du genre « /usr/bin/env: 'bash\r': No such file or directory ».
+# Même piège pour les Dockerfile et les fichiers de conf.
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sql  text eol=lf
+Dockerfile text eol=lf
+Caddyfile* text eol=lf
+
+# Binaires : ne jamais y toucher.
+*.png binary
+*.jpg binary
+*.ico binary
+*.apk binary
+*.keystore binary

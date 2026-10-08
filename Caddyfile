@@ -1,0 +1,45 @@
+# Caddy termine le TLS (Let's Encrypt automatique) et route :
+#   /api/*  et  /ws/*   -> service agent  (chat SSE + WebSocket vocal)
+#   tout le reste       -> service web    (Next.js / PWA)
+#
+# HTTPS est OBLIGATOIRE pour le mode vocal : les navigateurs bloquent
+# getUserMedia (accès micro) sur toute origine non sécurisée.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$HERMES_DOMAIN} {
+	encode zstd gzip
+
+	# En-têtes de sécurité
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Autorise le micro sur notre propre origine uniquement
+		Permissions-Policy "microphone=(self), camera=(), geolocation=()"
+		-Server
+	}
+
+	# WebSocket du mode vocal — pas de buffering, pas de timeout court
+	handle /ws/* {
+		reverse_proxy agent:4000 {
+			flush_interval -1
+		}
+	}
+
+	# API REST + SSE du mode texte
+	handle /api/* {
+		reverse_proxy agent:4000 {
+			# -1 = flush immédiat, indispensable pour le streaming SSE
+			flush_interval -1
+		}
+	}
+
+	# PWA / interface
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -1,0 +1,112 @@
+# Hermes — stack complète sur le VPS (AlmaLinux 8.10, 2 vCPU / 4 Go).
+# Les limites mémoire sont calibrées pour tenir dans 4 Go avec de la marge.
+#
+#   docker compose up -d --build
+#   docker compose logs -f agent
+#
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # certificats — NE PAS supprimer ce volume
+      - caddy_config:/config
+    environment:
+      HERMES_DOMAIN: ${HERMES_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    depends_on:
+      - web
+      - agent
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        # Figée dans le bundle client au build — pas lisible au runtime.
+        NEXT_PUBLIC_AGENT_URL: ${NEXT_PUBLIC_AGENT_URL}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_AGENT_URL: ${NEXT_PUBLIC_AGENT_URL}
+    expose:
+      - "3000"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  agent:
+    build:
+      context: ./apps/agent
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      HERMES_DEFAULT_MODEL: ${HERMES_DEFAULT_MODEL:-deepseek/deepseek-v4-flash-0731}
+      HERMES_UTILITY_MODEL: ${HERMES_UTILITY_MODEL:-deepseek/deepseek-v4-flash-0731}
+      OPENROUTER_SITE_URL: ${OPENROUTER_SITE_URL}
+      OPENROUTER_SITE_NAME: ${OPENROUTER_SITE_NAME:-Hermes}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY}
+      ELEVENLABS_VOICE_ID: ${ELEVENLABS_VOICE_ID}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      HERMES_ACCESS_CODE: ${HERMES_ACCESS_CODE}
+    expose:
+      - "4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./deploy/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Volontairement pas de `ports:` — Postgres n'est joignable que
+    # depuis le réseau interne Docker, jamais depuis Internet.
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --maxmemory 192mb --maxmemory-policy allkeys-lru --save ""
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pg_data:

@@ -1,0 +1,30 @@
+node_modules/
+.next/
+dist/
+build/
+out/
+
+# Secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+!.env.example
+
+# Capacitor / Android
+android/
+ios/
+*.apk
+*.aab
+*.keystore
+
+# Runtime
+data/
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
